@@ -17,7 +17,8 @@ class PlayerController extends Controller
      * Here I decided to store a new record for each request to this endpoint for a few reasons
      * The first reason is that the client needs a vary fast response in this endpoint and create a new record is better than update an existing record
      * because if we are trying to update the same resource at the same time in the database one of this request will need to wait (because this can create a race condition)
-     * and that is a lot of time
+     * and that is a lot of time and also we don't want to create a query monster to achieve that. I think that taking this solution
+     * we have something maintainable
      */
     public function store(Request $request)
     {
@@ -60,7 +61,8 @@ class PlayerController extends Controller
 
         if (!is_null($haveNewValues) && $haveNewValues) {
             //use a chunk function in order to don't kill the server with only one query
-            //with millions of players data
+            // because this can use too many resources of the server
+            //if we have millions of players and stats data
             DB::table('players')
                 ->select('id')
                 ->orderBy('id', 'desc')
@@ -110,13 +112,13 @@ class PlayerController extends Controller
             $standings = ['standings' => array_values($data)];
 
             //store value in redis
+            //this function json_encode can take time...is a possibility set this process to the queue
             Redis::set('standings',json_encode($standings));
 
             //set new values to false
             Redis::set('new_stats_records',false);
         }else{
             $standings = json_decode(Redis::get('standings'),true);
-
         }
 
         return response($standings);
