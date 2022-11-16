@@ -59,7 +59,7 @@ class PlayerController extends Controller
         //if the answer is no then we can use our previous request in redis
         $haveNewValues = Redis::get('new_stats_records');
 
-        if (!is_null($haveNewValues) && $haveNewValues) {
+        if (is_null($haveNewValues) || !is_null($haveNewValues) && $haveNewValues) {
             //use a chunk function in order to don't kill the server with only one query
             // because this can use too many resources of the server
             //if we have millions of players and stats data
